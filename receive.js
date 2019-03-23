@@ -1,9 +1,22 @@
 #!/usr/bin/env node
 
 var PORT = 7113
+var DIR = 'uploadDirectory'
 
 var http = require('http')
+,   path = require('path')
 ,   fs   = require('fs')
+
+
+fs.stat(DIR, function(e, stats) {
+	if(e) fs.mkdir(DIR, function(e, r) {
+		if(e) throw Error('cannot create dir '+ DIR)
+		console.log('created dir', DIR)
+	})
+	else if(!stats.isDirectory()) {
+		throw Error(DIR +' is not directory')
+	}
+})
 
 
 var server = new http.Server(serverHandleRequest)
@@ -23,11 +36,10 @@ function serverHandleRequest(req, res) {
 		return
 	}
 
-	var path = req.url.split('/').pop()
-	,   name = decodeURIComponent(path).split('/').pop()
+	var name = decodeURIComponent(req.url.split('/').pop()).split('/').pop()
 
 	try {
-		var stream = fs.createWriteStream('uploadDirectory/'+ name)
+		var stream = fs.createWriteStream(path.resolve(DIR, name))
 
 	} catch(e) {
 		console.log('[BAD] write '+ name +': '+ e)
