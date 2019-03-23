@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<title>Upload File</title>
+</head>
+
+<body>
+	<style>
+		input[type="file"] {
+			display: none;
+			position: absolute;
+			left: 0;
+			top: 0;
+			width: 100%;
+			height: 100%;
+		}
+		table td {
+			font-size: 1em;
+		}
+	</style>
+
+	<input type="file" multiple="multiple" id="eFileInput">
+	<table width="100%">
+		<tbody id="eTableBody"></tbody>
+	</table>
+
+	<script>
+		var PORT = 7113
+
+
+		var input = document.getElementById('eFileInput')
+		input.addEventListener('change', function() {
+			for(var i = 0; i < input.files.length; i++) {
+				upload(input.files[i])
+			}
+		})
+
+		window.addEventListener('click', function() {
+			input.click()
+		})
+
+		var body = document.getElementById('eTableBody')
+
+		function upload(file) {
+			var row = document.createElement('tr')
+			,   tdn = document.createElement('td')
+			,   tdr = document.createElement('td')
+
+			row.appendChild(tdn)
+			row.appendChild(tdr)
+			body.appendChild(row)
+
+			tdn.textContent = file.name
+			tdr.textContent = 'reading...'
+
+			var reader = new FileReader
+			reader.addEventListener('load', function() {
+				tdr.textContent = 'sending...'
+				send(file.name, reader.result, done, fail, prog)
+			})
+			reader.readAsArrayBuffer(file)
+
+
+			function done() {
+				tdr.textContent = 'ok'
+			}
+			function fail(e) {
+				tdr.textContent = 'error'
+			}
+			function prog(e) {
+				tdr.textContent = 'sending... ['+ e.loaded +'/'+ e.total +']'
+			}
+		}
+
+		function send(name, data, done, fail, prog) {
+			var req = new XMLHttpRequest
+			req.open('POST', '//'+ location.host +':'+ PORT +'/'+ encodeURIComponent(name), true)
+			req.overrideMimeType('application/octet-stream')
+			req.onload = done
+			req.onerror = fail
+			if(req.upload) req.upload.onprogress = prog
+			req.send(data)
+		}
+	</script>
+
+</body>
+</html>
